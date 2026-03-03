@@ -12,6 +12,17 @@ export default class HideDatePrefixPlugin extends Plugin {
 		this.app.workspace.onLayoutReady(() => {
 			this.startObserver();
 		});
+
+		// Re-process after any vault rename so the explorer always reflects the
+		// latest filename immediately, regardless of how Obsidian updates the DOM.
+		this.registerEvent(this.app.vault.on('rename', () => {
+			if (!this.settings.enabled) return;
+			setTimeout(() => {
+				document
+					.querySelectorAll<HTMLElement>('.nav-file-title-content')
+					.forEach((el) => this.processItem(el));
+			}, 50);
+		}));
 	}
 
 	onunload() {
@@ -41,19 +52,62 @@ export default class HideDatePrefixPlugin extends Plugin {
 			this.processContainer(container);
 		}
 
-		// Watch for new items being added to the explorer tree
+		// Watch for DOM changes in the explorer tree
 		this.observer = new MutationObserver((mutations) => {
 			if (!this.settings.enabled) return;
+
+			const toProcess = new Set<HTMLElement>();
+
 			for (const mutation of mutations) {
-				mutation.addedNodes.forEach((node) => {
-					if (node instanceof HTMLElement) {
-						this.processContainer(node);
+				const target = mutation.target as HTMLElement;
+
+				// Skip mutations we caused (our own spans being inserted)
+				if (target instanceof HTMLElement &&
+					(target.classList.contains('hdp-date') || target.classList.contains('hdp-rest'))) {
+					continue;
+				}
+
+				if (mutation.type === 'childList') {
+					// Case 1: a nav-file-title-content was updated in-place (Obsidian
+					// empties the element and inserts a new text node on rename)
+					if (target instanceof HTMLElement &&
+						target.classList.contains('nav-file-title-content')) {
+						toProcess.add(target);
 					}
-				});
+
+					mutation.addedNodes.forEach((node) => {
+						if (node instanceof HTMLElement) {
+							// Case 2: a whole nav-file-title-content element was added
+							if (node.classList.contains('nav-file-title-content')) {
+								toProcess.add(node);
+							} else {
+								// Case 3: a parent element was added (folder expand, initial render)
+								node.querySelectorAll<HTMLElement>('.nav-file-title-content')
+									.forEach((el) => toProcess.add(el));
+							}
+						} else {
+							// Case 4: a bare text node was added — parent may be title element
+							const parent = node.parentElement;
+							if (parent?.classList.contains('nav-file-title-content')) {
+								toProcess.add(parent);
+							}
+						}
+					});
+				}
+
+				// Case 5: text content mutated directly
+				if (mutation.type === 'characterData') {
+					const parent = mutation.target.parentElement;
+					if (parent?.classList.contains('nav-file-title-content')) {
+						toProcess.add(parent);
+					}
+				}
 			}
+
+			toProcess.forEach((el) => this.processItem(el));
 		});
 
-		this.observer.observe(container, { childList: true, subtree: true });
+		this.observer.observe(container, { childList: true, subtree: true, characterData: true });
 	}
 
 	stopObserver() {
@@ -75,23 +129,45 @@ export default class HideDatePrefixPlugin extends Plugin {
 
 	/**
 	 * Splits the title element into a hidden date span and a visible rest span.
-	 * No-ops if the element is already processed or the filename has no date prefix.
+	 * No-ops if the element is already processed, the filename has no date prefix,
+	 * or the full filename matches one of the configured ignore patterns.
 	 */
 	processItem(el: HTMLElement) {
 		// Already processed — skip
 		if (el.querySelector('.hdp-date')) return;
 
 		const fullTitle = el.textContent ?? '';
+
+		// Check user-defined ignore patterns against the full filename
+		if (this.isIgnored(fullTitle)) return;
+
 		const pattern = this.buildPattern();
 		const match = pattern.exec(fullTitle);
 		if (!match) return;
 
 		const datePart = match[0];          // e.g. "2026-03-02 "
 		const restPart = fullTitle.slice(datePart.length);
-
+		// Safety net: skip if nothing remains after the date
+		if (restPart.trim() === '') return;
 		el.empty();
 		el.createSpan({ cls: 'hdp-date', text: datePart });
 		el.createSpan({ cls: 'hdp-rest', text: restPart });
+	}
+
+	/**
+	 * Returns true if the full filename matches any of the configured ignore patterns.
+	 */
+	isIgnored(fullTitle: string): boolean {
+		for (const raw of this.settings.ignorePatterns) {
+			const trimmed = raw.trim();
+			if (!trimmed) continue;
+			try {
+				if (new RegExp(trimmed).test(fullTitle)) return true;
+			} catch {
+				// invalid regex — skip silently
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -177,5 +253,28 @@ class HideDatePrefixSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					})
 			);
+
+		new Setting(containerEl)
+			.setName('Ignore patterns (one regex per line)')
+			.setDesc(
+				'If the FULL filename matches any of these patterns, the date is not hidden. ' +
+				'One regex per line. ' +
+				'Default: ^\\d{4}-\\d{2}-\\d{2}$ — leaves bare Daily Notes (e.g. "2026-02-03") untouched. ' +
+				'Example to also ignore "2026-02-03 Meetings": add ^\\d{4}-\\d{2}-\\d{2}\\s+Meetings?$'
+			)
+			.addTextArea((area) => {
+				area
+					.setPlaceholder('^\\d{4}-\\d{2}-\\d{2}$')
+					.setValue(this.plugin.settings.ignorePatterns.join('\n'))
+					.onChange(async (value) => {
+						this.plugin.settings.ignorePatterns = value
+							.split('\n')
+							.map((l) => l.trim())
+							.filter((l) => l.length > 0);
+						await this.plugin.saveSettings();
+					});
+				area.inputEl.style.width = '100%';
+				area.inputEl.rows = 5;
+			});
 	}
 }
