@@ -12,20 +12,3 @@
 .nav-file-title-content .hdp-rest {
   /* Intentionally unstyled — inherits whatever the active theme sets */
 }
-
-.nav-file-title-content .hdp-today {
-  /* Intentionally unstyled — inherits whatever the active theme sets.
-     Add custom styles here if you want to highlight today's note. */
-}
-
-/* Sub-settings (format textboxes shown beneath their toggle) */
-.hdp-sub-setting {
-  padding-left: 2em;
-  border-left: 2px solid var(--background-modifier-border);
-}
-
-/* Live format preview text shown beneath date/label format inputs */
-.hdp-preview {
-  opacity: 0.65;
-  font-size: 0.9em;
-}

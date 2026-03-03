@@ -1,10 +1,10 @@
 {
   "id": "hide-date-prefix",
   "name": "Hide Date Prefix",
-  "version": "1.4.5",
+  "version": "1.0.0",
   "minAppVersion": "1.0.0",
-  "description": "Hides the leading date prefix (e.g. YYYY-MM-DD) from note titles in the file explorer while preserving sort order. Format uses standard Moment.js tokens.",
-  "author": "tanoshia",
-  "authorUrl": "https://github.com/tanoshia/Obs-Hide-Date",
+  "description": "Hides the leading date (YYYY-MM-DD) from note titles in the file explorer while preserving date-based sort order.",
+  "author": "Your Name",
+  "authorUrl": "",
   "isDesktopOnly": false
 }

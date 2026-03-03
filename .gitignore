@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Build output (committed for Obsidian plugin distribution)
+# main.js is intentionally NOT ignored
+
+# TypeScript build info
+*.tsbuildinfo
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+
+# npm logs
+npm-debug.log*
