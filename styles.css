@@ -23,3 +23,9 @@
   padding-left: 2em;
   border-left: 2px solid var(--background-modifier-border);
 }
+
+/* Live format preview text shown beneath date/label format inputs */
+.hdp-preview {
+  opacity: 0.65;
+  font-size: 0.9em;
+}

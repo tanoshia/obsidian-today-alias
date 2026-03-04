@@ -2,13 +2,14 @@ export interface HideDatePrefixSettings {
 	/** Whether the plugin is active. */
 	enabled: boolean;
 	/**
-	 * ISO 8601 date format using {YYYY}, {MM}, {DD}, {hh}, {mm}, {ss} tokens.
-	 * Converted to a regex internally. Default: {YYYY}-{MM}-{DD}.
+	 * Moment.js format string matching the date prefix in filenames.
+	 * See https://momentjs.com/docs/#/displaying/format/
+	 * Default: "YYYY-MM-DD".
 	 */
 	dateFormat: string;
 	/**
-	 * List of ISO token format strings (one per line in UI) matched against the FULL filename.
-	 * Uses {YYYY}, {MM}, {DD}, {hh}, {mm}, {ss} tokens; everything else is matched literally.
+	 * List of Moment.js format strings (one per line) matched against the FULL filename.
+	 * Supports all Moment.js tokens plus * as a wildcard.
 	 * If any pattern matches, the file is left untouched (date not hidden).
 	 */
 	ignorePatterns: string[];
@@ -18,8 +19,8 @@ export interface HideDatePrefixSettings {
 	 */
 	showTodayLabel: boolean;
 	/**
-	 * Format string for the Today label on bare daily notes.
-	 * Supports {YYYY}, {MM}, {DD} tokens.
+	 * Moment.js format string for the Today label on bare daily notes.
+	 * Use [...] to wrap literal text (e.g. "[Today     -]DD").
 	 */
 	todayLabelFormat: string;
 	/**
@@ -28,21 +29,27 @@ export interface HideDatePrefixSettings {
 	 */
 	showTodayLabelForIgnored: boolean;
 	/**
-	 * Format string for the Today label prefix on ignored-pattern matches.
-	 * Supports {YYYY}, {MM}, {DD} tokens. The rest of the filename is appended after.
+	 * Moment.js format string for the Today label prefix on ignored-pattern matches.
+	 * Use [...] to wrap literal text. The rest of the filename is appended after.
 	 */
 	todayLabelForIgnoredFormat: string;
+	/**
+	 * Internal version — used to migrate settings from older formats.
+	 * Undefined means pre-1.4.0 ({TOKEN} style). 1 = Moment.js style.
+	 */
+	settingsVersion?: number;
 }
 
 export const DEFAULT_SETTINGS: HideDatePrefixSettings = {
 	enabled: true,
-	dateFormat: '{YYYY}-{MM}-{DD}',
+	dateFormat: 'YYYY-MM-DD',
 	ignorePatterns: [
-		'{YYYY}-{MM}-{DD}',
-		'{YYYY}-{MM}-{DD} Meetings',
+		'YYYY-MM-DD',
+		'YYYY-MM-DD [Meetings]',
 	],
 	showTodayLabel: true,
-	todayLabelFormat: 'Today     -{DD}',
+	todayLabelFormat: '[✘ Today, ]MMM Do',
 	showTodayLabelForIgnored: true,
-	todayLabelForIgnoredFormat: 'Today\'s ',
+	todayLabelForIgnoredFormat: "[✘ Today's ]",
+	settingsVersion: 1,
 };
