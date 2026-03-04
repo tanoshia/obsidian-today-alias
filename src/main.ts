@@ -155,7 +155,19 @@ export default class HideDatePrefixPlugin extends Plugin {
 		}
 
 		// Check user-defined ignore patterns against the full filename
-		if (this.isIgnored(fullTitle)) return;
+		if (this.isIgnored(fullTitle)) {
+			// Even for ignored files, show the "Today" label if the option is on
+			// and the filename starts with today's date.
+			if (this.settings.showTodayLabel && this.settings.showTodayLabelForIgnored) {
+				const label = this.getTodayLabelForPrefixed(fullTitle);
+				if (label !== null) {
+					el.dataset.hdpOriginal = fullTitle;
+					el.empty();
+					el.createSpan({ cls: 'hdp-today', text: label });
+				}
+			}
+			return;
+		}
 
 		const pattern = this.buildPattern();
 		const match = pattern.exec(fullTitle);
@@ -219,6 +231,26 @@ export default class HideDatePrefixPlugin extends Plugin {
 		const todayStr = `${yyyy}-${mm}-${dd}`;
 		if (fullTitle.trim() !== todayStr) return null;
 		return `Today     -${dd}`;
+	}
+
+	/**
+	 * If fullTitle starts with today's date followed by optional whitespace and
+	 * has additional content after the date, returns the title with the date
+	 * replaced by "Today". e.g. "2026-03-03 Meetings" → "Today Meetings".
+	 * Returns null if the title doesn't start with today's date or has nothing
+	 * after the date (bare dates are handled by getTodayLabel instead).
+	 */
+	getTodayLabelForPrefixed(fullTitle: string): string | null {
+		const now = new Date();
+		const yyyy = now.getFullYear();
+		const mm = String(now.getMonth() + 1).padStart(2, '0');
+		const dd = String(now.getDate()).padStart(2, '0');
+		const todayStr = `${yyyy}-${mm}-${dd}`;
+		const match = new RegExp(`^${todayStr}\\s*`).exec(fullTitle);
+		if (!match) return null;
+		const rest = fullTitle.slice(match[0].length);
+		if (rest.trim() === '') return null; // bare date — handled by getTodayLabel
+		return `Today     -${dd} ${rest}`;
 	}
 
 	/**
@@ -286,30 +318,30 @@ class HideDatePrefixSettingTab extends PluginSettingTab {
 					})
 			);
 
+		let datePatternInputEl: HTMLInputElement | null = null;
+
 		new Setting(containerEl)
 			.setName('Date pattern (regex)')
 			.setDesc(
-				'Regular expression matched against the start of each filename. ' +
-				'Default: ^(\\d{4}-\\d{2}-\\d{2})\\s* — matches YYYY-MM-DD optionally followed by spaces. ' +
-				'Change this if your date format differs (e.g. ^(\\d{8})\\s* for 20260302).'
+				'Regex anchored at the start of each filename that identifies the date prefix to hide. ' +
+				'Example: ^(\\d{8})\\s* for filenames like 20260303.'
 			)
-			.addText((text) =>
+			.addText((text) => {
+				datePatternInputEl = text.inputEl;
 				text
 					.setPlaceholder('^(\\d{4}-\\d{2}-\\d{2})\\s*')
 					.setValue(this.plugin.settings.datePattern)
 					.onChange(async (value) => {
 						this.plugin.settings.datePattern = value.trim() || DEFAULT_SETTINGS.datePattern;
 						await this.plugin.saveSettings();
-					})
-			);
+					});
+			});
 
 		new Setting(containerEl)
 			.setName('Ignore patterns (one regex per line)')
 			.setDesc(
-				'If the FULL filename matches any of these patterns, the date is not hidden. ' +
-				'One regex per line. ' +
-				'Default: ^\\d{4}-\\d{2}-\\d{2}$ — leaves bare Daily Notes (e.g. "2026-02-03") untouched. ' +
-				'Example to also ignore "2026-02-03 Meetings": add ^\\d{4}-\\d{2}-\\d{2}\\s+Meetings?$'
+				'Files whose full name matches any pattern are left untouched (date prefix not hidden). One regex per line. ' +
+				'Example: ^\\d{4}-\\d{2}-\\d{2}$ ignores bare daily notes like "2026-02-03".'
 			)
 			.addTextArea((area) => {
 				area
@@ -324,20 +356,40 @@ class HideDatePrefixSettingTab extends PluginSettingTab {
 					});
 				area.inputEl.style.width = '100%';
 				area.inputEl.rows = 5;
+				// Match the min-width of the "Date pattern" text input above
+				window.requestAnimationFrame(() => {
+					if (datePatternInputEl) {
+						area.inputEl.style.minWidth = datePatternInputEl.offsetWidth + 'px';
+					}
+				});
 			});
 
 		new Setting(containerEl)
 			.setName('Show "Today" label for today\'s daily note')
 			.setDesc(
-				'When enabled, a Daily Note whose filename is exactly today\'s date ' +
-				'(e.g. "2026-03-03") is displayed as "Today     -DD" (e.g. "Today     -03"). ' +
-				'The label updates automatically at midnight.'
+				'Replaces today\'s date with a "Today" label in the file explorer. Updates automatically at midnight. ' +
+				'Example: "2026-03-03" → "Today     -03".'
 			)
 			.addToggle((toggle) =>
 				toggle
 					.setValue(this.plugin.settings.showTodayLabel)
 					.onChange(async (value) => {
 						this.plugin.settings.showTodayLabel = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName('Show "Today" label for ignore-pattern matches')
+			.setDesc(
+				'Also applies the Today label to files that match an ignore pattern but start with today\'s date. ' +
+				'Requires: "Show Today label" enabled. Example: "2026-03-03 Meetings" → "Today     -03 Meetings".'
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.showTodayLabelForIgnored)
+					.onChange(async (value) => {
+						this.plugin.settings.showTodayLabelForIgnored = value;
 						await this.plugin.saveSettings();
 					})
 			);

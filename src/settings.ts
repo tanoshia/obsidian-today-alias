@@ -17,11 +17,21 @@ export interface HideDatePrefixSettings {
 	 * as "Today     -DD" instead of the raw date.
 	 */
 	showTodayLabel: boolean;
+	/**
+	 * When true, files that match an ignore pattern but whose filename starts
+	 * with today's date will also have the date replaced with "Today".
+	 * e.g. "2026-03-03 Meetings" → "Today Meetings".
+	 */
+	showTodayLabelForIgnored: boolean;
 }
 
 export const DEFAULT_SETTINGS: HideDatePrefixSettings = {
 	enabled: true,
 	datePattern: '^(\\d{4}-\\d{2}-\\d{2})\\s*',
-	ignorePatterns: ['^\\d{4}-\\d{2}-\\d{2}$'],
+	ignorePatterns: [
+		'^\\d{4}-\\d{2}-\\d{2}$',
+		'^\\d{4}-\\d{2}-\\d{2}\\s+Meetings?$',
+	],
 	showTodayLabel: true,
+	showTodayLabelForIgnored: true,
 };

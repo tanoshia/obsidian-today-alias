@@ -40,7 +40,7 @@ Hides the leading `YYYY-MM-DD` date from note titles in the **file explorer** wh
 |---|---|---|
 | **Enable** | `true` | Toggle date-prefix hiding without uninstalling. |
 | **Date pattern (regex)** | `^(\d{4}-\d{2}-\d{2})\s*` | Regex matched from the start of each filename. Change for different date formats (e.g. `^(\d{8})\s*` for `20260302`). |
-| **Ignore patterns** | `^\d{4}-\d{2}-\d{2}$` | One regex per line. If the full filename matches, it is left untouched. Add extra lines to ignore additional patterns (e.g. `^\d{4}-\d{2}-\d{2}\s+Meetings?$`). |
+| **Ignore patterns** | `^\d{4}-\d{2}-\d{2}$` | One regex per line. If the full filename matches, it is left untouched. Add extra lines to ignore additional patterns (e.g. `^\d{4}-\d{2}-\d{2}\s+Meetings?$`), (e.g. ^\d{4}-\d{2}-\d{2}\s+) |
 | **Show "Today" label** | `true` | Replaces a bare today-dated Daily Note with `Today     -DD`. Updates at midnight. |
 
 ## Installation (manual / development)

@@ -1,7 +1,7 @@
 {
   "id": "hide-date-prefix",
   "name": "Hide Date Prefix",
-  "version": "1.2.0",
+  "version": "1.2.4",
   "minAppVersion": "1.0.0",
   "description": "Hides the leading date (YYYY-MM-DD) from note titles in the file explorer while preserving date-based sort order.",
   "author": "Your Name",
