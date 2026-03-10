@@ -15,6 +15,7 @@ Shows configurable aliases (e.g. `✘ Today, Mar 10th` / `↩ Yesterday, Mar 9th
 - **Custom ignore Today label** — ignored-pattern matches that start with today's date get their own configurable label prefix (default `✘ Today's `)
 - **Live preview** — every format field shows a real-time preview of how today's date renders with the current string
 - **Live rename support** — display updates correctly on every filename rename, no lag or skipped updates
+- **Tab title aliasing** — open editor tabs (tab strip + header bar) show the same alias or date-stripped title as the file explorer, updating automatically when tabs are opened, switched, or renamed
 - **Auto-migration** — settings saved with the old `{TOKEN}` syntax are silently upgraded to Moment.js equivalents on first load
 - **Clean unload** — all elements are restored to plain text when the plugin is disabled or unloaded
 
@@ -100,6 +101,7 @@ Settings using the old `{YYYY}-{MM}-{DD}` token syntax are automatically migrate
 - **Renamed** plugin from *Hide Date Prefix* to *Today Alias* to better reflect its primary purpose
 - **feat:** Yesterday label — yesterday's bare Daily Note and pattern-matched notes each get a configurable alias/prefix (mirrors the Today feature exactly)
 - **fix:** Prior-day notes now update correctly when the day rolls over; the old Today label no longer persists on the previous day's note
+- **feat:** Tab title aliasing — open editor tabs (tab strip + header bar) now show the same alias or date-stripped title as the file explorer
 
 ### v1.4.x → v1.5.x
 - Moment.js format strings replace the old `{TOKEN}` syntax everywhere (auto-migrated on first load)
@@ -114,9 +116,9 @@ Renaming would break internal links and require vault reorganisation. This plugi
 
 - [x] ~~Handle custom patterns to ignore (like "YYYY-MM-DD Meetings")~~
 - [x] ~~Format date as Obi daily note does ([moment.js](https://momentjs.com/docs/#/displaying/format/))~~
-- [x] ~~MIT license~~
+- [x] ~~MIT license (v1.4.5b)~~
 - [x] ~~fix: Update "Today" for old notes; issue: prior day's note still displays as custom "today" format next day, needs manual update to fix currently~~
-- [x] ~~feat: Add `yesterday` tag (similar to Today unique handling)~~
+- [x] ~~feat: Add `yesterday` tag (similar to Today unique handling) (v1.5.3)~~
+- [x] ~~feat: Rename affected tabs too (consistency) (v1.5.3)~~
 - [ ] Publish/submit to Obsidian Community Plugins (v2.0.x)
-- [ ] feat: Rename affected tabs too (consistency)
 - [ ] Handle future dated notes differently?

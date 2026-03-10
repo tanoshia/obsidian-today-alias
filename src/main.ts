@@ -4,6 +4,11 @@ import { TodayAliasSettings, DEFAULT_SETTINGS } from './settings';
 export default class TodayAliasPlugin extends Plugin {
 	settings: TodayAliasSettings;
 	private observer: MutationObserver | null = null;
+	private tabObserver: MutationObserver | null = null;
+	/** Tracks alias replacements made on tab-title elements so they can be cleanly restored. */
+	private tabAliasMap = new WeakMap<HTMLElement, { original: string; alias: string }>();
+	/** CSS selectors for the two tab-title locations Obsidian renders. */
+	private static readonly TAB_SELECTORS = '.view-header-title, .workspace-tab-header-inner-title';
 	/** Fixed-format (YYYY-MM-DD) date string for the last known day; used to detect rollovers. */
 	private lastKnownDay = '';
 
@@ -34,21 +39,38 @@ export default class TodayAliasPlugin extends Plugin {
 		// 3. Precise midnight trigger for when the app stays active all night.
 		this.scheduleMidnightRefresh();
 
-		// Re-process after any vault rename so the explorer always reflects the
-		// latest filename immediately, regardless of how Obsidian updates the DOM.
+		// Re-process after any vault rename so the explorer and tabs always
+		// reflect the latest filename immediately.
 		this.registerEvent(this.app.vault.on('rename', () => {
 			if (!this.settings.enabled) return;
 			setTimeout(() => {
 				document
 					.querySelectorAll<HTMLElement>('.nav-file-title-content')
 					.forEach((el) => this.processItem(el));
+				this.refreshTabs();
 			}, 50);
 		}));
+
+		// Re-label tabs whenever Obsidian switches the active leaf or rearranges
+		// the layout (e.g. opening a new tab, moving a pane).
+		this.registerEvent(
+			this.app.workspace.on('active-leaf-change', () => {
+				if (!this.settings.enabled) return;
+				setTimeout(() => this.refreshTabs(), 50);
+			})
+		);
+		this.registerEvent(
+			this.app.workspace.on('layout-change', () => {
+				if (!this.settings.enabled) return;
+				setTimeout(() => this.refreshTabs(), 50);
+			})
+		);
 	}
 
 	onunload() {
 		this.stopObserver();
 		this.restoreAllItems();
+		this.restoreAllTabs();
 	}
 
 	async loadSettings() {
@@ -208,11 +230,78 @@ export default class TodayAliasPlugin extends Plugin {
 		});
 
 		this.observer.observe(container, { childList: true, subtree: true, characterData: true });
+
+		// Start the parallel observer for tab titles
+		this.startTabObserver();
 	}
 
 	stopObserver() {
 		this.observer?.disconnect();
 		this.observer = null;
+		this.stopTabObserver();
+	}
+
+	// ─── Tab observer lifecycle ───────────────────────────────────────────────
+
+	/**
+	 * Observes the workspace container for mutations to tab-title elements,
+	 * skipping mutations that we ourselves caused.
+	 */
+	startTabObserver() {
+		const workspaceEl = (this.app.workspace as any).containerEl as HTMLElement;
+
+		this.tabObserver = new MutationObserver((mutations) => {
+			if (!this.settings.enabled) return;
+			const toProcess = new Set<HTMLElement>();
+
+			const isTabTitle = (el: Element | null): el is HTMLElement =>
+				el instanceof HTMLElement &&
+				(el.classList.contains('view-header-title') ||
+					el.classList.contains('workspace-tab-header-inner-title'));
+
+			const enqueue = (el: HTMLElement) => {
+				const entry = this.tabAliasMap.get(el);
+				// Skip if this mutation was caused by us (text still matches our alias)
+				if (entry && el.textContent === entry.alias) return;
+				if (entry) this.tabAliasMap.delete(el); // Obsidian changed it — clear stale entry
+				toProcess.add(el);
+			};
+
+			for (const m of mutations) {
+				if (m.type === 'characterData') {
+					const parent = m.target.parentElement;
+					if (isTabTitle(parent)) enqueue(parent);
+				}
+
+				if (m.type === 'childList') {
+					const t = m.target as HTMLElement;
+					if (isTabTitle(t)) enqueue(t);
+
+					m.addedNodes.forEach((node) => {
+						if (!(node instanceof HTMLElement)) return;
+						if (node.classList.contains('view-header-title') ||
+							node.classList.contains('workspace-tab-header-inner-title')) {
+							toProcess.add(node);
+						} else {
+							node.querySelectorAll<HTMLElement>(TodayAliasPlugin.TAB_SELECTORS)
+								.forEach((el) => toProcess.add(el));
+						}
+					});
+				}
+			}
+
+			toProcess.forEach((el) => this.processTab(el));
+		});
+
+		this.tabObserver.observe(workspaceEl, { childList: true, subtree: true, characterData: true });
+
+		// Label whatever is already open
+		if (this.settings.enabled) this.processAllTabs();
+	}
+
+	stopTabObserver() {
+		this.tabObserver?.disconnect();
+		this.tabObserver = null;
 	}
 
 	// ─── DOM processing ───────────────────────────────────────────────────────
@@ -413,6 +502,77 @@ export default class TodayAliasPlugin extends Plugin {
 		return false;
 	}
 
+	// ─── Tab DOM processing ───────────────────────────────────────────────────
+
+	/**
+	 * Applies the same alias / date-strip logic to a tab-title element.
+	 * Skips the element if it was already processed (tabAliasMap has an entry).
+	 */
+	processTab(el: HTMLElement) {
+		if (this.tabAliasMap.has(el)) return; // already handled
+
+		const fullTitle = el.textContent ?? '';
+		if (!fullTitle.trim()) return;
+
+		let alias: string | null = null;
+
+		if (this.settings.showTodayLabel) {
+			alias = this.getTodayLabel(fullTitle);
+		}
+		if (!alias && this.settings.showYesterdayLabel) {
+			alias = this.getYesterdayLabel(fullTitle);
+		}
+		if (!alias && this.isIgnored(fullTitle)) {
+			if (this.settings.showTodayLabel && this.settings.showTodayLabelForIgnored) {
+				alias = this.getTodayLabelForPrefixed(fullTitle);
+			}
+			if (!alias && this.settings.showYesterdayLabel && this.settings.showYesterdayLabelForIgnored) {
+				alias = this.getYesterdayLabelForPrefixed(fullTitle);
+			}
+			// Ignored with no today/yesterday alias → leave untouched
+			if (!alias) return;
+		}
+		if (!alias) {
+			// Strip the date prefix and show only the rest of the title.
+			const match = this.buildPattern().exec(fullTitle);
+			if (!match) return;
+			const rest = fullTitle.slice(match[0].length);
+			if (!rest) return; // bare date with no today/yesterday alias → leave as-is
+			alias = rest;
+		}
+
+		if (alias === fullTitle) return; // unchanged — nothing to do
+
+		this.tabAliasMap.set(el, { original: fullTitle, alias });
+		el.textContent = alias;
+	}
+
+	/**
+	 * Restores a single tab-title element to its original plain-text.
+	 */
+	restoreTab(el: HTMLElement) {
+		const entry = this.tabAliasMap.get(el);
+		if (!entry) return;
+		el.textContent = entry.original;
+		this.tabAliasMap.delete(el);
+	}
+
+	restoreAllTabs() {
+		document.querySelectorAll<HTMLElement>(TodayAliasPlugin.TAB_SELECTORS)
+			.forEach((el) => this.restoreTab(el));
+	}
+
+	processAllTabs() {
+		document.querySelectorAll<HTMLElement>(TodayAliasPlugin.TAB_SELECTORS)
+			.forEach((el) => this.processTab(el));
+	}
+
+	/** Restore all tab titles then re-apply aliases. Used after settings change or day rollover. */
+	refreshTabs() {
+		this.restoreAllTabs();
+		if (this.settings.enabled) this.processAllTabs();
+	}
+
 	/**
 	 * Restore an element to its original plain-text form.
 	 */
@@ -565,10 +725,12 @@ export default class TodayAliasPlugin extends Plugin {
 	 */
 	refresh() {
 		this.restoreAllItems();
+		this.restoreAllTabs();
 		if (this.settings.enabled) {
 			document
 				.querySelectorAll<HTMLElement>('.nav-file-title-content')
 				.forEach((el) => this.processItem(el));
+			this.processAllTabs();
 		}
 	}
 }
