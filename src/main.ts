@@ -821,7 +821,10 @@ class TodayAliasSettingTab extends PluginSettingTab {
 			const prefix = this.plugin.settings.showTodayLabelForIgnored
 				? moment().format(this.plugin.settings.todayLabelForIgnoredFormat) + '…'
 				: '(off)';
-			todayPreviewEl.innerHTML = `Date only: ${bare}<br>Prefix: ${prefix}`;
+			todayPreviewEl.empty();
+			todayPreviewEl.appendText(`Date only: ${bare}`);
+			todayPreviewEl.createEl('br');
+			todayPreviewEl.appendText(`Prefix: ${prefix}`);
 		};
 
 		const todaySetting = new Setting(containerEl)
@@ -854,7 +857,7 @@ class TodayAliasSettingTab extends PluginSettingTab {
 						refreshTodayPreview();
 						await this.plugin.saveSettings();
 					});
-				text.inputEl.style.width = '160px';
+				text.inputEl.addClass('ta-label-input');
 				text.setDisabled(!this.plugin.settings.showTodayLabel);
 			})
 			.addToggle((t) =>
@@ -877,7 +880,7 @@ class TodayAliasSettingTab extends PluginSettingTab {
 						refreshTodayPreview();
 						await this.plugin.saveSettings();
 					});
-				text.inputEl.style.width = '130px';
+				text.inputEl.addClass('ta-prefix-input');
 				text.setDisabled(!this.plugin.settings.showTodayLabelForIgnored);
 			});
 		refreshTodayPreview();
@@ -905,7 +908,10 @@ class TodayAliasSettingTab extends PluginSettingTab {
 			const prefix = this.plugin.settings.showYesterdayLabelForIgnored
 				? moment().subtract(1, 'day').format(this.plugin.settings.yesterdayLabelForIgnoredFormat) + '…'
 				: '(off)';
-			yesterdayPreviewEl.innerHTML = `Date only: ${bare}<br>Prefix: ${prefix}`;
+			yesterdayPreviewEl.empty();
+			yesterdayPreviewEl.appendText(`Date only: ${bare}`);
+			yesterdayPreviewEl.createEl('br');
+			yesterdayPreviewEl.appendText(`Prefix: ${prefix}`);
 		};
 
 		const yesterdaySetting = new Setting(containerEl)
@@ -938,7 +944,7 @@ class TodayAliasSettingTab extends PluginSettingTab {
 						refreshYesterdayPreview();
 						await this.plugin.saveSettings();
 					});
-				text.inputEl.style.width = '160px';
+				text.inputEl.addClass('ta-label-input');
 				text.setDisabled(!this.plugin.settings.showYesterdayLabel);
 			})
 			.addToggle((t) =>
@@ -961,7 +967,7 @@ class TodayAliasSettingTab extends PluginSettingTab {
 						refreshYesterdayPreview();
 						await this.plugin.saveSettings();
 					});
-				text.inputEl.style.width = '130px';
+				text.inputEl.addClass('ta-prefix-input');
 				text.setDisabled(!this.plugin.settings.showYesterdayLabelForIgnored);
 			});
 		refreshYesterdayPreview();
@@ -1028,17 +1034,10 @@ class TodayAliasSettingTab extends PluginSettingTab {
 						ignorePreviewEl.textContent = makeIgnorePreview(patterns);
 						await this.plugin.saveSettings();
 					});
-				area.inputEl.style.width = '100%';
+				area.inputEl.addClass('ta-ignore-textarea');
 				area.inputEl.rows = 3;
-				area.inputEl.style.resize = 'vertical';
 			});
 		// Move the textarea below the description instead of beside it
-		ignoreSetting.settingEl.style.flexWrap = 'wrap';
-		const ignoreControlEl = ignoreSetting.settingEl.querySelector('.setting-item-control') as HTMLElement | null;
-		if (ignoreControlEl) {
-			ignoreControlEl.style.flexBasis = '100%';
-			ignoreControlEl.style.maxWidth = '100%';
-			ignoreControlEl.style.marginTop = '6px';
-		}
+		ignoreSetting.settingEl.addClass('ta-ignore-setting');
 	}
 }

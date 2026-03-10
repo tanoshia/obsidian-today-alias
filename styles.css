@@ -30,6 +30,32 @@
   font-size: 0.9em;
 }
 
+/* Sized text inputs in the Today/Yesterday setting rows */
+.ta-label-input {
+  width: 160px;
+}
+
+.ta-prefix-input {
+  width: 130px;
+}
+
+/* Ignore-patterns textarea */
+.ta-ignore-textarea {
+  width: 100%;
+  resize: vertical;
+}
+
+/* Ignore-patterns setting: wrap control block below description */
+.ta-ignore-setting {
+  flex-wrap: wrap;
+}
+
+.ta-ignore-setting .setting-item-control {
+  flex-basis: 100%;
+  max-width: 100%;
+  margin-top: 6px;
+}
+
 /* ── Today / Yesterday responsive rows ──────────────────────────────────── */
 /* Wide: info left, 4 controls right.                                        */
 /* Narrow (≤ 480 px): controls wrap below and stack as two vertical pairs.   */
