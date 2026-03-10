@@ -1,10 +1,10 @@
 {
   "id": "today-alias",
   "name": "Today Alias",
-  "version": "2.0.1",
+  "version": "2.0.3",
   "minAppVersion": "1.0.0",
   "description": "Shows configurable aliases (e.g. \"Today\" / \"Yesterday\") for notes with date prefix in the file explorer. Hides date prefixes from all other notes. Sort order is preserved.",
   "author": "tanoshia",
-  "authorUrl": "https://github.com/tanoshia/obsidian-today-alias",
+  "authorUrl": "https://github.com/tanoshia",
   "isDesktopOnly": false
 }
