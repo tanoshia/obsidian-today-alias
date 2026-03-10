@@ -1,10 +1,10 @@
 {
-  "id": "hide-date-prefix",
-  "name": "Hide Date Prefix",
-  "version": "1.0.0",
+  "id": "today-alias",
+  "name": "Today Alias",
+  "version": "1.5.3",
   "minAppVersion": "1.0.0",
-  "description": "Hides the leading date (YYYY-MM-DD) from note titles in the file explorer while preserving date-based sort order.",
-  "author": "Your Name",
-  "authorUrl": "",
+  "description": "Shows configurable aliases (e.g. \"✘ Today\" / \"↩ Yesterday\") for today's and yesterday's notes in the file explorer, and hides date prefixes from all other notes. Sort order is always preserved.",
+  "author": "tanoshia",
+  "authorUrl": "https://github.com/tanoshia/obsidian-today-alias",
   "isDesktopOnly": false
 }

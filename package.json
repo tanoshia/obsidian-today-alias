@@ -1,7 +1,7 @@
 {
-  "name": "obsidian-hide-date-prefix",
-  "version": "1.0.0",
-  "description": "Obsidian plugin to hide date prefixes in the file explorer",
+  "name": "obsidian-today-alias",
+  "version": "1.5.3",
+  "description": "Obsidian plugin to show today/yesterday aliases and hide date prefixes in the file explorer",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",

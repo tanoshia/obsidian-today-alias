@@ -1,14 +1,79 @@
-export interface HideDatePrefixSettings {
+export interface TodayAliasSettings {
 	/** Whether the plugin is active. */
 	enabled: boolean;
 	/**
-	 * A regex string (anchored at start) that captures the date portion to hide.
-	 * Default matches `YYYY-MM-DD` optionally followed by one or more spaces.
+	 * Moment.js format string matching the date prefix in filenames.
+	 * See https://momentjs.com/docs/#/displaying/format/
+	 * Default: "YYYY-MM-DD".
 	 */
-	datePattern: string;
+	dateFormat: string;
+	/**
+	 * List of Moment.js format strings (one per line) matched against the FULL filename.
+	 * Supports all Moment.js tokens plus * as a wildcard.
+	 * If any pattern matches, the file is left untouched (date not hidden).
+	 */
+	ignorePatterns: string[];
+	/**
+	 * When true, a Daily Note whose filename is exactly today's date is shown
+	 * using todayLabelFormat instead of the raw date.
+	 */
+	showTodayLabel: boolean;
+	/**
+	 * Moment.js format string for the Today label on bare daily notes.
+	 * Use [...] to wrap literal text (e.g. "[Today     -]DD").
+	 */
+	todayLabelFormat: string;
+	/**
+	 * When true, files that match an ignore pattern but start with today's date
+	 * also get the Today label (using todayLabelForIgnoredFormat).
+	 */
+	showTodayLabelForIgnored: boolean;
+	/**
+	 * Moment.js format string for the Today label prefix on ignored-pattern matches.
+	 * Use [...] to wrap literal text. The rest of the filename is appended after.
+	 */
+	todayLabelForIgnoredFormat: string;
+	/**
+	 * When true, a Daily Note whose filename is exactly yesterday's date is shown
+	 * using yesterdayLabelFormat instead of the raw date.
+	 */
+	showYesterdayLabel: boolean;
+	/**
+	 * Moment.js format string for the Yesterday label on bare daily notes.
+	 * Use [...] to wrap literal text (e.g. "[↩ Yesterday, ]MMM Do").
+	 */
+	yesterdayLabelFormat: string;
+	/**
+	 * When true, files that match an ignore pattern but start with yesterday's date
+	 * also get the Yesterday label (using yesterdayLabelForIgnoredFormat).
+	 */
+	showYesterdayLabelForIgnored: boolean;
+	/**
+	 * Moment.js format string for the Yesterday label prefix on ignored-pattern matches.
+	 * Use [...] to wrap literal text. The rest of the filename is appended after.
+	 */
+	yesterdayLabelForIgnoredFormat: string;
+	/**
+	 * Internal version — used to migrate settings from older formats.
+	 * Undefined means pre-1.4.0 ({TOKEN} style). 1 = Moment.js style.
+	 */
+	settingsVersion?: number;
 }
 
-export const DEFAULT_SETTINGS: HideDatePrefixSettings = {
+export const DEFAULT_SETTINGS: TodayAliasSettings = {
 	enabled: true,
-	datePattern: '^(\\d{4}-\\d{2}-\\d{2})\\s*',
+	dateFormat: 'YYYY-MM-DD',
+	ignorePatterns: [
+		'YYYY-MM-DD',
+		'YYYY-MM-DD [Meetings]',
+	],
+	showTodayLabel: true,
+	todayLabelFormat: '[✘ Today, ]MMM Do',
+	showTodayLabelForIgnored: true,
+	todayLabelForIgnoredFormat: "[✘ Today's ]",
+	showYesterdayLabel: true,
+	yesterdayLabelFormat: '[↩ Yesterday, ]MMM Do',
+	showYesterdayLabelForIgnored: true,
+	yesterdayLabelForIgnoredFormat: "[↩ Yesterday's ]",
+	settingsVersion: 1,
 };

@@ -1,14 +1,71 @@
 /*
-  Hide Date Prefix – styles
-  The .hdp-date span is hidden so only .hdp-rest is visible.
+  Today Alias – styles
+  The .ta-date span is hidden so only .ta-rest is visible.
   Sort order is unaffected because Obsidian sorts by the actual filename,
   not by the displayed text content.
 */
 
-.nav-file-title-content .hdp-date {
+.nav-file-title-content .ta-date {
   display: none;
 }
 
-.nav-file-title-content .hdp-rest {
+.nav-file-title-content .ta-rest {
   /* Intentionally unstyled — inherits whatever the active theme sets */
+}
+
+.nav-file-title-content .ta-today {
+  /* Intentionally unstyled — inherits whatever the active theme sets.
+     Add custom styles here if you want to highlight today's note. */
+}
+
+/* Sub-settings (format textboxes shown beneath their toggle) */
+.ta-sub-setting {
+  padding-left: 2em;
+  border-left: 2px solid var(--background-modifier-border);
+}
+
+/* Live format preview text shown beneath date/label format inputs */
+.ta-preview {
+  opacity: 0.65;
+  font-size: 0.9em;
+}
+
+/* ── Today / Yesterday responsive rows ──────────────────────────────────── */
+/* Wide: info left, 4 controls right.                                        */
+/* Narrow (≤ 480 px): controls wrap below and stack as two vertical pairs.   */
+
+.ta-day-setting {
+  container-type: inline-size;
+  flex-wrap: wrap;
+}
+
+/* Each pair: one toggle + one text input side-by-side */
+.ta-ctrl-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+@container (max-width: 480px) {
+  /* Push the entire control block onto its own line */
+  .ta-day-setting .setting-item-control {
+    flex-basis: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px solid var(--background-modifier-border);
+  }
+  /* Let each group span the full available width */
+  .ta-ctrl-group {
+    width: 100%;
+  }
+  /* Expand text inputs to fill their group */
+  .ta-ctrl-group input[type="text"] {
+    flex: 1 1 0;
+    width: 0 !important; /* override inline width; flex: 1 takes over */
+    min-width: 60px;
+  }
 }
