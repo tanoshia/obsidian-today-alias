@@ -167,7 +167,7 @@ export default class TodayAliasPlugin extends Plugin {
 		const leaves = this.app.workspace.getLeavesOfType('file-explorer');
 		if (leaves.length === 0) return;
 
-		const container = (leaves[0].view as any).containerEl as HTMLElement;
+		const container = leaves[0].view.containerEl;
 
 		// Process what's already rendered
 		if (this.settings.enabled) {
@@ -248,7 +248,7 @@ export default class TodayAliasPlugin extends Plugin {
 	 * skipping mutations that we ourselves caused.
 	 */
 	startTabObserver() {
-		const workspaceEl = (this.app.workspace as any).containerEl as HTMLElement;
+		const workspaceEl = (this.app.workspace as unknown as { containerEl: HTMLElement }).containerEl;
 
 		this.tabObserver = new MutationObserver((mutations) => {
 			if (!this.settings.enabled) return;
@@ -780,7 +780,7 @@ class TodayAliasSettingTab extends PluginSettingTab {
 			.setDesc(createFragment((frag) => {
 				frag.appendText('Moment.js format string for the date prefix to hide. See ');
 				frag.createEl('a', {
-					text: 'format reference',
+					text: 'Format reference',
 					href: 'https://momentjs.com/docs/#/displaying/format/',
 					attr: { target: '_blank' },
 				});
