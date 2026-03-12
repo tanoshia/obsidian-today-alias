@@ -7,7 +7,9 @@ Shows configurable aliases (e.g. `✘ Today, Mar 10th` / `↩ Yesterday, Mar 9th
 
 ## How to install
 
-### From within Obsidian
+### From within Obsidian *(Once Approved)*
+ 
+> **Publish status:** *Pending Obsidian review - Mar 11th*
 
 You can activate this plugin within Obsidian by doing the following:
 
@@ -16,11 +18,13 @@ You can activate this plugin within Obsidian by doing the following:
 - Click Browse community plugins
 - Search for "Today Alias"
 - Click Install
-- Once installed, close the community plugins window and activate the newly installed plugin
+- Once installed you may need to refresh your community plugins
 
 ### Manual installation
 
 Download `main.js`, `manifest.json`, `styles.css` from the [latest release](https://github.com/tanoshia/obsidian-today-alias/releases/latest) and put them into `<vault>/.obsidian/plugins/obsidian-today-alias` folder.
+
+> *If available, install from the Community Plugins store receive future updates*
 
 ## Features
 
